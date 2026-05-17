@@ -150,6 +150,12 @@
     width: 36px; padding: 6px 0; font-size: 16px; font-weight: 700;
     background: #f3f4f6; color: var(--text);
   }
+  .li-qty-ctrl button:disabled {
+    opacity: 0.32; cursor: not-allowed; background: #f9fafb;
+  }
+  .btn-edit.unlocked {
+    background: var(--primary);
+  }
   .row-actions { display: flex; gap: 6px; margin-top: 4px; }
   .row-actions button {
     width: auto; padding: 6px 10px; font-size: 11px; font-weight: 700;
@@ -362,6 +368,7 @@ let frontImg = null;
 let editingId = null;
 let editingCreated = null;
 let currentFilter = 'すべて';
+let unlockedRowId = null;  // ±ボタンを起動中の行ID。null=全行ロック
 
 /* ============ カテゴリーUI ============ */
 function initCategoryUI() {
@@ -397,11 +404,16 @@ function adjustForm(delta) {
   el.value = Math.max(0, cur + delta);
 }
 async function adjustItem(id, delta) {
+  if (unlockedRowId !== id) return; // ロック中は無効
   const it = await dbGet(id);
   if (!it) return;
   it.qty = Math.max(0, (it.qty || 0) + delta);
   it.updated = new Date().toISOString();
   await dbPut(it);
+  renderList();
+}
+function toggleRowLock(id) {
+  unlockedRowId = (unlockedRowId === id) ? null : id;
   renderList();
 }
 
@@ -523,6 +535,7 @@ async function editItem(id) {
 async function deleteItem(id) {
   if (!confirm('この項目を消去しますか?')) return;
   await dbDel(id);
+  if (unlockedRowId === id) unlockedRowId = null;
   renderList();
 }
 
@@ -575,20 +588,24 @@ async function renderList() {
     const imgHtml = it.front
       ? `<img src="${it.front}">`
       : `<div class="no-img">📦</div>`;
+    const unlocked = unlockedRowId === it.id;
+    const editLabel = unlocked ? '完了' : '修正';
+    const editCls   = unlocked ? 'btn-edit unlocked' : 'btn-edit';
+    const dis = unlocked ? '' : 'disabled';
     html += `<div class="list-item">
       ${imgHtml}
       <div>
         <div class="li-name">${escapeHtml(it.smallCat || it.bigCat)}</div>
         <div class="li-cat">${escapeHtml(it.bigCat)}</div>
         <div class="row-actions">
-          <button class="btn-edit" onclick="editItem('${it.id}')">修正</button>
-          <button class="btn-del"  onclick="deleteItem('${it.id}')">消去</button>
+          <button class="${editCls}" onclick="toggleRowLock('${it.id}')">${editLabel}</button>
+          <button class="btn-del"    onclick="deleteItem('${it.id}')">消去</button>
         </div>
       </div>
       <div class="li-qty-display ${cls}">${it.qty}</div>
       <div class="li-qty-ctrl">
-        <button onclick="adjustItem('${it.id}',  1)">＋</button>
-        <button onclick="adjustItem('${it.id}', -1)">−</button>
+        <button onclick="adjustItem('${it.id}',  1)" ${dis}>＋</button>
+        <button onclick="adjustItem('${it.id}', -1)" ${dis}>−</button>
       </div>
     </div>`;
   }
