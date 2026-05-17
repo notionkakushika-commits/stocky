@@ -237,8 +237,6 @@
         <span class="pill">タップで撮影</span>
       </div>
       <div class="thumb-meta">
-        <label>商品名</label>
-        <input type="text" id="itemName" placeholder="例: アタックZERO 詰替">
         <label>大カテゴリー</label>
         <select id="bigCat" onchange="onBigCatChange()"></select>
         <label id="smallCatLabel">小カテゴリー</label>
@@ -467,11 +465,11 @@ function applyCapture(dataUrl) {
 
 /* ============ 保存・一覧 ============ */
 async function saveItem() {
-  const name = document.getElementById('itemName').value.trim();
-  if (!name) { alert('商品名を入力してください'); return; }
   const big   = document.getElementById('bigCat').value;
   const small = document.getElementById('smallCat').value || '';
   const qty   = Math.max(0, parseInt(document.getElementById('qty').value || '0', 10));
+  // 表示用のラベル: 小カテゴリがあればそれ、なければ大カテゴリ
+  const name  = small || big;
   await dbPut({
     id: editingId || (Date.now() + '-' + Math.random().toString(36).slice(2,6)),
     name,
@@ -489,7 +487,6 @@ async function saveItem() {
 function resetForm() {
   frontImg = null;
   document.getElementById('frontThumb').innerHTML = '<span>写真<br>(任意)</span><span class="pill">タップで撮影</span>';
-  document.getElementById('itemName').value = '';
   document.getElementById('qty').value = '1';
   document.getElementById('bigCat').selectedIndex = 0;
   onBigCatChange();
@@ -511,14 +508,13 @@ async function editItem(id) {
   document.getElementById('frontThumb').innerHTML = frontImg
     ? `<img src="${frontImg}"><span class="pill">写真</span>`
     : '<span>写真<br>(任意)</span><span class="pill">タップで撮影</span>';
-  document.getElementById('itemName').value = it.name || '';
   document.getElementById('bigCat').value = it.bigCat;
   onBigCatChange();
   if (it.smallCat) document.getElementById('smallCat').value = it.smallCat;
   document.getElementById('qty').value = it.qty;
   editingId = it.id;
   editingCreated = it.created;
-  document.getElementById('editTargetName').textContent = it.name || '(無名)';
+  document.getElementById('editTargetName').textContent = it.smallCat || it.bigCat;
   document.getElementById('editBanner').style.display = 'flex';
   document.getElementById('saveBtn').textContent = '更新する';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -582,8 +578,8 @@ async function renderList() {
     html += `<div class="list-item">
       ${imgHtml}
       <div>
-        <div class="li-name">${escapeHtml(it.name)}</div>
-        <div class="li-cat">${escapeHtml(it.bigCat)}${it.smallCat ? ' / ' + escapeHtml(it.smallCat) : ''}</div>
+        <div class="li-name">${escapeHtml(it.smallCat || it.bigCat)}</div>
+        <div class="li-cat">${escapeHtml(it.bigCat)}</div>
         <div class="row-actions">
           <button class="btn-edit" onclick="editItem('${it.id}')">修正</button>
           <button class="btn-del"  onclick="deleteItem('${it.id}')">消去</button>

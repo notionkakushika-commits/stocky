@@ -1,5 +1,5 @@
 /* Stocky Service Worker */
-const CACHE = 'stocky-v1';
+const CACHE = 'stocky-v2';
 const ASSETS = [
   './',
   './index.html',
