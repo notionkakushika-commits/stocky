@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Stocky</title>
+
+<!-- PWA / iOS -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#10b981">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Stocky">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" href="./favicon-32.png" sizes="32x32">
+
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --primary: #10b981;
+    --primary-hover: #059669;
+    --danger: #dc2626;
+    --warn: #f59e0b;
+    --low: #ef4444;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bot: env(safe-area-inset-bottom);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+    overscroll-behavior-y: none;
+  }
+  header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: calc(var(--safe-top) + 10px) 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 17px; margin: 0; }
+  header .sub { font-size: 11px; color: var(--muted); }
+  header button.ghost {
+    width: auto; padding: 8px 10px; background: transparent;
+    color: var(--primary); border: 1px solid var(--primary);
+    border-radius: 8px; font-size: 12px; font-weight: 700;
+  }
+  main { padding: 12px 14px 160px; max-width: 720px; margin: 0 auto; }
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 14px;
+  }
+  .panel h2 { font-size: 14px; margin: 0 0 12px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
+
+  .thumb-wrap { display: flex; gap: 12px; align-items: flex-start; }
+  .thumb {
+    width: 140px; aspect-ratio: 1/1; background: #f1f3f5;
+    border: 1px dashed var(--border); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 12px; overflow: hidden; position: relative;
+    flex-shrink: 0;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb .pill {
+    position: absolute; top: 6px; left: 6px;
+    background: rgba(0,0,0,0.55); color: white;
+    padding: 2px 8px; border-radius: 999px; font-size: 10px;
+  }
+  .thumb-meta { flex: 1; }
+  button {
+    border: none; cursor: pointer; padding: 12px 14px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; color: white; background: var(--primary);
+    width: 100%;
+  }
+  button:active { background: var(--primary-hover); }
+  button.secondary { background: #6b7280; }
+  button.ghost { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+  button.danger { background: var(--danger); }
+  input[type="text"], input[type="number"], select {
+    width: 100%; padding: 12px; border: 1px solid var(--border);
+    border-radius: 10px; font-size: 16px; background: white; font-family: inherit;
+  }
+  label { font-size: 12px; color: var(--muted); display: block; margin: 10px 0 4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hint  { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* 個数入力 */
+  .qty {
+    display: grid; grid-template-columns: 48px 1fr 48px; gap: 6px; align-items: center;
+  }
+  .qty button {
+    width: 100%; padding: 12px 0; font-size: 22px; line-height: 1; font-weight: 700;
+    background: #f3f4f6; color: var(--text);
+  }
+  .qty input {
+    text-align: center; font-size: 20px; font-weight: 700;
+  }
+
+  /* リスト */
+  .filter-bar {
+    display: flex; gap: 6px; margin-bottom: 10px;
+    overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 6px 12px; background: #f3f4f6; color: var(--muted);
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+    white-space: nowrap; cursor: pointer; border: 1px solid transparent;
+  }
+  .filter-chip.active {
+    background: #d1fae5; color: #065f46; border-color: #6ee7b7;
+  }
+  .sort-bar {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    font-size: 12px; color: var(--muted);
+  }
+  .sort-bar select {
+    width: auto; padding: 4px 8px; font-size: 12px;
+  }
+
+  .list-item {
+    display: grid; grid-template-columns: 64px 1fr auto auto; gap: 10px;
+    align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .list-item img {
+    width: 64px; height: 64px; border-radius: 10px; object-fit: cover;
+  }
+  .list-item .no-img {
+    width: 64px; height: 64px; border-radius: 10px;
+    background: #f3f4f6; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; color: var(--muted);
+  }
+  .li-name { font-weight: 600; font-size: 15px; }
+  .li-cat { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .li-qty-display {
+    font-size: 22px; font-weight: 700; padding: 0 8px; min-width: 44px;
+    text-align: center;
+  }
+  .li-qty-display.low { color: var(--low); }
+  .li-qty-display.warn { color: var(--warn); }
+  .li-qty-ctrl {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .li-qty-ctrl button {
+    width: 36px; padding: 6px 0; font-size: 16px; font-weight: 700;
+    background: #f3f4f6; color: var(--text);
+  }
+  .row-actions { display: flex; gap: 6px; margin-top: 4px; }
+  .row-actions button {
+    width: auto; padding: 6px 10px; font-size: 11px; font-weight: 700;
+    border-radius: 8px;
+  }
+  .btn-edit { background: #6b7280; }
+  .btn-del  { background: var(--danger); }
+
+  .empty { text-align: center; color: var(--muted); padding: 24px; font-size: 13px; }
+
+  /* カメラモーダル */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center; z-index: 50;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    flex-direction: column;
+  }
+  .modal-bg.show { display: flex; }
+  video {
+    width: 100%; max-width: 480px; aspect-ratio: 3/4;
+    background: #000; border-radius: 12px; object-fit: cover;
+  }
+  .cam-actions { display: flex; gap: 10px; margin-top: 14px; width: 100%; max-width: 480px; }
+  .cam-actions > * { flex: 1; }
+  .cam-title { color: white; margin-bottom: 12px; font-size: 14px; }
+
+  /* 下部固定登録ボタン */
+  .footer-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    padding: 10px 14px calc(10px + var(--safe-bot));
+    z-index: 20;
+  }
+  .footer-bar .btn-row { display: flex; gap: 8px; }
+  .footer-bar .btn-row > * { flex: 1; }
+
+  /* インストール案内 */
+  .install-hint {
+    background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;
+    padding: 10px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 12px;
+  }
+  .install-hint b { font-weight: 700; }
+
+  /* 編集モードバナー */
+  .edit-banner {
+    background: #fef3c7; border: 1px solid #fde68a; color: #92400e;
+    padding: 8px 12px; border-radius: 10px; font-size: 13px; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .edit-banner button {
+    width: auto; padding: 6px 10px; font-size: 12px; background: transparent;
+    color: #92400e; border: 1px solid #92400e; font-weight: 700; border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Stocky</h1>
+    <div class="sub">日用品の在庫管理</div>
+  </div>
+  <button class="ghost" onclick="exportData()">書出</button>
+</header>
+
+<main>
+  <div id="installHint" class="install-hint" style="display:none;">
+    <b>ホーム画面に追加して使うと便利です。</b><br>
+    Safari下部の共有ボタン → 「ホーム画面に追加」を選んでください。
+  </div>
+
+  <!-- 編集モードバナー -->
+  <div id="editBanner" class="edit-banner" style="display:none;">
+    <span>編集中: <b id="editTargetName"></b></span>
+    <button onclick="cancelEdit()">キャンセル</button>
+  </div>
+
+  <!-- 登録パネル -->
+  <div class="panel">
+    <h2>新規登録 / 編集</h2>
+    <div class="thumb-wrap">
+      <div class="thumb" id="frontThumb" onclick="openCamera()">
+        <span>写真<br>(任意)</span>
+        <span class="pill">タップで撮影</span>
+      </div>
+      <div class="thumb-meta">
+        <label>商品名</label>
+        <input type="text" id="itemName" placeholder="例: アタックZERO 詰替">
+        <label>大カテゴリー</label>
+        <select id="bigCat" onchange="onBigCatChange()"></select>
+        <label id="smallCatLabel">小カテゴリー</label>
+        <select id="smallCat"></select>
+      </div>
+    </div>
+
+    <label>残量(個数)</label>
+    <div class="qty">
+      <button onclick="adjustForm(-1)">−</button>
+      <input type="number" id="qty" inputmode="numeric" value="1" min="0">
+      <button onclick="adjustForm(1)">＋</button>
+    </div>
+    <div class="hint">在庫の数。ストックしている本数や袋数を入れてください。</div>
+  </div>
+
+  <!-- 一覧パネル -->
+  <div class="panel">
+    <h2>ダッシュボード</h2>
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="sort-bar">
+      並び順:
+      <select id="sortBy" onchange="renderList()">
+        <option value="qty-asc">残量が少ない順</option>
+        <option value="qty-desc">残量が多い順</option>
+        <option value="cat">カテゴリ順</option>
+        <option value="updated">更新が新しい順</option>
+      </select>
+    </div>
+    <div id="listWrap"><div class="empty">読み込み中…</div></div>
+  </div>
+</main>
+
+<!-- 下部固定: 登録 -->
+<div class="footer-bar">
+  <div class="btn-row">
+    <button class="secondary" onclick="resetForm()">リセット</button>
+    <button onclick="saveItem()" id="saveBtn">登録する</button>
+  </div>
+</div>
+
+<!-- カメラ用モーダル -->
+<div class="modal-bg" id="camModal">
+  <div class="cam-title">撮影</div>
+  <video id="video" autoplay playsinline></video>
+  <div class="cam-actions">
+    <button class="secondary" onclick="closeCamera()">閉じる</button>
+    <button onclick="switchCamera()" class="ghost" style="color:white; border-color:#fff;">切替</button>
+    <button onclick="capture()">📸 撮影</button>
+  </div>
+  <div style="margin-top:10px; width: 100%; max-width: 480px;">
+    <label style="color:#cbd5e1;">うまく起動しない時はファイル選択:</label>
+    <input type="file" accept="image/*" capture="environment" id="fileFallback"
+           style="color:white; background:rgba(255,255,255,0.1); padding:8px; border-radius:8px; width:100%;">
+  </div>
+</div>
+
+<script>
+/* ============ カテゴリ定義 ============ */
+const CATEGORIES = {
+  '洗濯':        ['洗濯洗剤','柔軟剤','漂白剤','衣類用ハイター'],
+  'キッチン':    ['食器用洗剤','食洗機洗剤','スポンジ','ラップ','アルミホイル'],
+  '掃除':        ['浴室用洗剤','トイレ用洗剤','住居用クリーナー全般'],
+  'バス・身体ケア': ['シャンプー','コンディショナー','ボディソープ','ハンドソープ','歯ブラシ','歯磨き粉','固形石鹸'],
+  '衛生用品':    [],
+  '紙製品':      ['トイレットペーパー','ティッシュ','キッチンペーパー'],
+  'その他':      ['ゴミ袋','その他消耗品']
+};
+
+/* ============ IndexedDB ============ */
+const DB_NAME = 'stocky';
+const STORE   = 'items';
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const os = db.createObjectStore(STORE, { keyPath: 'id' });
+        os.createIndex('bigCat', 'bigCat');
+      }
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+}
+async function dbAll() {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+}
+async function dbGet(id) {
+  const all = await dbAll();
+  return all.find(x => x.id === id);
+}
+async function dbPut(item) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(item);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function dbDel(id) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+/* ============ 状態 ============ */
+let stream = null;
+let useFacing = 'environment';
+let frontImg = null;
+let editingId = null;
+let editingCreated = null;
+let currentFilter = 'すべて';
+
+/* ============ カテゴリーUI ============ */
+function initCategoryUI() {
+  const bigSel = document.getElementById('bigCat');
+  Object.keys(CATEGORIES).forEach(k => {
+    const o = document.createElement('option'); o.value = k; o.textContent = k; bigSel.appendChild(o);
+  });
+  onBigCatChange();
+}
+function onBigCatChange() {
+  const big = document.getElementById('bigCat').value;
+  const smallSel = document.getElementById('smallCat');
+  const smallLbl = document.getElementById('smallCatLabel');
+  smallSel.innerHTML = '';
+  const subs = CATEGORIES[big] || [];
+  if (subs.length === 0) {
+    // 小カテゴリーなし: UI上で隠す
+    smallSel.style.display = 'none';
+    smallLbl.style.display = 'none';
+  } else {
+    smallSel.style.display = '';
+    smallLbl.style.display = '';
+    subs.forEach(s => {
+      const o = document.createElement('option'); o.value = s; o.textContent = s; smallSel.appendChild(o);
+    });
+  }
+}
+
+/* ============ 個数 ============ */
+function adjustForm(delta) {
+  const el = document.getElementById('qty');
+  const cur = parseInt(el.value || '0', 10);
+  el.value = Math.max(0, cur + delta);
+}
+async function adjustItem(id, delta) {
+  const it = await dbGet(id);
+  if (!it) return;
+  it.qty = Math.max(0, (it.qty || 0) + delta);
+  it.updated = new Date().toISOString();
+  await dbPut(it);
+  renderList();
+}
+
+/* ============ カメラ ============ */
+async function openCamera() {
+  document.getElementById('camModal').classList.add('show');
+  try {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: useFacing }, audio: false });
+    document.getElementById('video').srcObject = stream;
+  } catch (e) { console.warn('カメラ起動失敗', e); }
+  document.getElementById('fileFallback').onchange = onFileFallback;
+}
+async function switchCamera() {
+  useFacing = (useFacing === 'environment') ? 'user' : 'environment';
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: useFacing }, audio: false });
+    document.getElementById('video').srcObject = stream;
+  } catch(e) {}
+}
+function closeCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  document.getElementById('camModal').classList.remove('show');
+}
+function capture() {
+  const video = document.getElementById('video');
+  if (!video.videoWidth) { alert('カメラ未準備。ファイル選択で代用してください。'); return; }
+  const c = document.createElement('canvas');
+  const maxW = 1024;
+  const ratio = video.videoHeight / video.videoWidth;
+  c.width  = Math.min(maxW, video.videoWidth);
+  c.height = Math.round(c.width * ratio);
+  c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+  applyCapture(c.toDataURL('image/jpeg', 0.78));
+}
+function onFileFallback(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      const maxW = 1024;
+      const ratio = img.height / img.width;
+      c.width  = Math.min(maxW, img.width);
+      c.height = Math.round(c.width * ratio);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      applyCapture(c.toDataURL('image/jpeg', 0.78));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+function applyCapture(dataUrl) {
+  frontImg = dataUrl;
+  document.getElementById('frontThumb').innerHTML = `<img src="${dataUrl}"><span class="pill">写真</span>`;
+  closeCamera();
+}
+
+/* ============ 保存・一覧 ============ */
+async function saveItem() {
+  const name = document.getElementById('itemName').value.trim();
+  if (!name) { alert('商品名を入力してください'); return; }
+  const big   = document.getElementById('bigCat').value;
+  const small = document.getElementById('smallCat').value || '';
+  const qty   = Math.max(0, parseInt(document.getElementById('qty').value || '0', 10));
+  await dbPut({
+    id: editingId || (Date.now() + '-' + Math.random().toString(36).slice(2,6)),
+    name,
+    bigCat: big,
+    smallCat: small,
+    qty,
+    front: frontImg,
+    created: editingCreated || new Date().toISOString(),
+    updated: new Date().toISOString()
+  });
+  resetForm();
+  renderList();
+}
+
+function resetForm() {
+  frontImg = null;
+  document.getElementById('frontThumb').innerHTML = '<span>写真<br>(任意)</span><span class="pill">タップで撮影</span>';
+  document.getElementById('itemName').value = '';
+  document.getElementById('qty').value = '1';
+  document.getElementById('bigCat').selectedIndex = 0;
+  onBigCatChange();
+  editingId = null;
+  editingCreated = null;
+  document.getElementById('editBanner').style.display = 'none';
+  document.getElementById('saveBtn').textContent = '登録する';
+}
+
+function cancelEdit() {
+  if (editingId && !confirm('編集を破棄しますか?')) return;
+  resetForm();
+}
+
+async function editItem(id) {
+  const it = await dbGet(id);
+  if (!it) return;
+  frontImg = it.front || null;
+  document.getElementById('frontThumb').innerHTML = frontImg
+    ? `<img src="${frontImg}"><span class="pill">写真</span>`
+    : '<span>写真<br>(任意)</span><span class="pill">タップで撮影</span>';
+  document.getElementById('itemName').value = it.name || '';
+  document.getElementById('bigCat').value = it.bigCat;
+  onBigCatChange();
+  if (it.smallCat) document.getElementById('smallCat').value = it.smallCat;
+  document.getElementById('qty').value = it.qty;
+  editingId = it.id;
+  editingCreated = it.created;
+  document.getElementById('editTargetName').textContent = it.name || '(無名)';
+  document.getElementById('editBanner').style.display = 'flex';
+  document.getElementById('saveBtn').textContent = '更新する';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteItem(id) {
+  if (!confirm('この項目を消去しますか?')) return;
+  await dbDel(id);
+  renderList();
+}
+
+/* ============ フィルタチップ ============ */
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  const cats = ['すべて', ...Object.keys(CATEGORIES)];
+  bar.innerHTML = cats.map(c => `
+    <span class="filter-chip ${c===currentFilter?'active':''}" onclick="setFilter('${c}')">${c}</span>
+  `).join('');
+}
+function setFilter(c) {
+  currentFilter = c;
+  renderFilterBar();
+  renderList();
+}
+
+/* ============ リスト描画 ============ */
+function qtyClass(q) {
+  if (q <= 0) return 'low';
+  if (q <= 1) return 'low';
+  if (q <= 2) return 'warn';
+  return '';
+}
+function sortItems(items, mode) {
+  if (mode === 'qty-asc')   return items.sort((a,b)=> a.qty-b.qty || a.bigCat.localeCompare(b.bigCat,'ja'));
+  if (mode === 'qty-desc')  return items.sort((a,b)=> b.qty-a.qty || a.bigCat.localeCompare(b.bigCat,'ja'));
+  if (mode === 'cat')       return items.sort((a,b)=>{
+    const order = Object.keys(CATEGORIES);
+    const da = order.indexOf(a.bigCat) - order.indexOf(b.bigCat);
+    if (da) return da;
+    return (a.smallCat||'').localeCompare(b.smallCat||'','ja') || a.qty-b.qty;
+  });
+  if (mode === 'updated')   return items.sort((a,b)=> (b.updated||b.created||'').localeCompare(a.updated||a.created||''));
+  return items;
+}
+function escapeHtml(s) {
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+async function renderList() {
+  let items = await dbAll();
+  if (currentFilter !== 'すべて') items = items.filter(x => x.bigCat === currentFilter);
+  const mode = document.getElementById('sortBy').value;
+  items = sortItems(items, mode);
+  const wrap = document.getElementById('listWrap');
+  if (!items.length) { wrap.innerHTML = '<div class="empty">該当する項目はありません</div>'; return; }
+  let html = '';
+  for (const it of items) {
+    const cls = qtyClass(it.qty);
+    const imgHtml = it.front
+      ? `<img src="${it.front}">`
+      : `<div class="no-img">📦</div>`;
+    html += `<div class="list-item">
+      ${imgHtml}
+      <div>
+        <div class="li-name">${escapeHtml(it.name)}</div>
+        <div class="li-cat">${escapeHtml(it.bigCat)}${it.smallCat ? ' / ' + escapeHtml(it.smallCat) : ''}</div>
+        <div class="row-actions">
+          <button class="btn-edit" onclick="editItem('${it.id}')">修正</button>
+          <button class="btn-del"  onclick="deleteItem('${it.id}')">消去</button>
+        </div>
+      </div>
+      <div class="li-qty-display ${cls}">${it.qty}</div>
+      <div class="li-qty-ctrl">
+        <button onclick="adjustItem('${it.id}',  1)">＋</button>
+        <button onclick="adjustItem('${it.id}', -1)">−</button>
+      </div>
+    </div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+/* ============ エクスポート ============ */
+async function exportData() {
+  const items = (await dbAll()).map(({front, ...rest}) => rest);
+  const blob = new Blob([JSON.stringify(items, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'stocky-items.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ============ インストール案内 ============ */
+(function showInstallHintIfNeeded() {
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !standalone) {
+    document.getElementById('installHint').style.display = 'block';
+  }
+})();
+
+/* ============ SW登録 ============ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+/* 起動時 */
+initCategoryUI();
+renderFilterBar();
+renderList();
+</script>
+</body>
+</html>
