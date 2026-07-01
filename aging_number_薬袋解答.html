@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>薬袋方式 構造解析 ─ Age may be just a number</title>
+<style>
+  :root{
+    --adv:#d97706;      /* 副詞 ( ) オレンジ */
+    --adj:#059669;      /* 形容詞 < > 緑 */
+    --noun:#2563eb;     /* 名詞 [ ] 青 */
+    --pillar:#dc2626;   /* 大黒柱 赤 */
+    --verb:#d97706;     /* 述語動詞 番号 */
+    --ink:#1f2937;
+    --paper:#fbfaf7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Hiragino Mincho ProN','Yu Mincho',serif;
+    background:var(--paper); color:var(--ink);
+    margin:0; padding:0 16px 80px; line-height:1.9;
+  }
+  header{max-width:900px;margin:0 auto;padding:28px 0 8px;text-align:center;}
+  header h1{font-size:22px;margin:0 0 4px;letter-spacing:.02em;}
+  header p{margin:2px 0;color:#6b7280;font-size:13px;}
+  .legend{max-width:900px;margin:14px auto 24px;background:#fff;border:1px solid #e5e7eb;
+    border-radius:12px;padding:14px 18px;font-size:13.5px;line-height:2.0;}
+  .legend b{font-size:14px;}
+  .chip{display:inline-block;padding:1px 8px;border-radius:6px;margin:0 3px;font-weight:700;}
+  .wrap{max-width:900px;margin:0 auto;}
+  .sent{background:#fff;border:1px solid #e8e6e0;border-radius:12px;
+    padding:16px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .num{display:inline-block;background:var(--ink);color:#fff;font-size:12px;
+    padding:1px 9px;border-radius:20px;margin-bottom:8px;font-family:sans-serif;}
+  .num.focus{background:var(--pillar);}
+  .en{font-size:26px;line-height:2.5;font-family:'Times New Roman',serif;}
+  /* 括弧色 */
+  .adv{color:var(--adv);} .adj{color:var(--adj);} .noun{color:var(--noun);}
+  .b-adv{color:var(--adv);font-weight:700;} .b-adj{color:var(--adj);font-weight:700;} .b-noun{color:var(--noun);font-weight:700;}
+  /* 動詞番号（上付き） */
+  .v{color:var(--verb);font-weight:700;font-size:17px;vertical-align:super;font-family:sans-serif;}
+  .p{color:var(--pillar);font-weight:700;font-size:18px;vertical-align:super;font-family:sans-serif;}
+  .gap{color:var(--pillar);font-weight:700;}
+  .note{margin-top:12px;padding-top:10px;border-top:1px dashed #d6d3cc;font-size:18px;line-height:2.0;}
+  .note .lbl{display:inline-block;min-width:84px;color:#6b7280;font-family:sans-serif;font-size:15px;}
+  .tmk{font-family:sans-serif;background:#f3f4f6;border-radius:5px;padding:0 6px;font-size:16.5px;}
+  .jp{margin-top:8px;font-size:18px;line-height:1.95;color:#374151;}
+  .jp b{color:var(--ink);}
+  footer{max-width:900px;margin:40px auto 0;font-size:12px;color:#9ca3af;text-align:center;}
+</style>
+</head>
+<body>
+<header>
+  <h1>薬袋方式 構造解析</h1>
+  <p>Age may be just a number ─ but the right number to gauge your health?</p>
+  <p>難関大レベル／全文 SVOC・動詞型・準動詞 解析</p>
+</header>
+
+<div class="legend">
+  <b>記号の凡例</b><br>
+  <span class="chip" style="background:#fef3c7;color:#92400e;">(&nbsp;)</span>副詞句・副詞節
+  <span class="chip" style="background:#d1fae5;color:#065f46;">&lt;&nbsp;&gt;</span>形容詞句・形容詞節
+  <span class="chip" style="background:#dbeafe;color:#1e40af;">[&nbsp;]</span>名詞句・名詞節<br>
+  <span class="v">①〜⑤</span> 述語動詞（従属節も含む）
+  <span class="p">❶〜❺</span> 大黒柱（主節の述語動詞・1文に1つ）
+  <span class="p">−❸</span>/<span class="v">−③</span> 受身
+  <span class="gap">▲</span> 関係詞の空所(gap)<br>
+  <span class="tmk">左ラベル | 動詞型</span> ＝ 準動詞のT字マーカー（S/O/前O/C＝格が上、a＝形容詞用法、ad＝副詞用法）
+</div>
+
+<div class="wrap">
+
+<!-- 導入 -->
+<div class="sent">
+  <span class="num">導入</span>
+  <div class="en">
+    Feel<span class="v">①</span> <span class="b-adv">(</span><span class="adv">like</span> <span class="b-noun">[</span>you're<span class="v">②</span> 40 years old <span class="adj">going on 60</span><span class="b-noun">]</span><span class="b-adv">)</span>?<br>
+    Or maybe, 40 <span class="adj">going on 21</span>?
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>命令文 Feel<span class="p">❶</span>（you 省略）。like は「〜のように」の前置詞＝副詞句をつくる。<br>
+    <span class="lbl">準動詞</span><span class="tmk">going on 60 … a | ①</span> 現在分詞・形容詞用法で you を修飾（自動詞 go →完了ではなく進行的修飾）。<br>
+    <div class="jp"><b>訳：</b>40歳なのに気分は60歳？　いや、もしかすると40歳で気分は21歳？</div>
+  </div>
+</div>
+
+<!-- (1) -->
+<div class="sent">
+  <span class="num focus">focus (1)</span>
+  <div class="en">
+    Age may be<span class="v">②</span> just a number, but medical experts increasingly are saying<span class="p">❸</span>
+    <span class="b-noun">[</span>it might not always be<span class="v">②</span> the right number
+    <span class="adj">to gauge your health</span><span class="b-noun">]</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>but の後 are saying<span class="p">❸</span>（③・現在進行）。前半 Age may be は等位の別節（be は②）。<br>
+    <span class="lbl">O(名詞節)</span><span class="tmk">it … be … number</span> saying の目的語。接続詞 that が省略。<br>
+    <span class="lbl">準動詞</span><span class="tmk">to gauge … a | ③</span> 不定詞・形容詞用法で number を修飾。your health が O。<br>
+    <div class="jp"><b>訳：</b>年齢は単なる数字にすぎないかもしれないが、医療専門家がますます言うには、<b>それ（＝暦年齢）は健康をはかる上で必ずしも正しい数字とは限らない</b>のかもしれない。</div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="sent">
+  <span class="num">3</span>
+  <div class="en">
+    Everybody grows<span class="p">❷</span> older <span class="b-adv">(</span><span class="adv">at a different pace</span><span class="b-adv">)</span>,
+    <span class="b-adv">(</span><span class="adv">according to a recent study</span>
+    <span class="b-adj">&lt;</span><span class="adj">that</span> <span class="gap">▲</span> found<span class="v">③</span>
+    <span class="b-noun">[</span>the processes <span class="adj">of aging</span> can begin<span class="v">①</span> fairly early in life<span class="b-noun">]</span><span class="b-adj">&gt;</span><span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>grows<span class="p">❷</span>（grow +補語 older の②）。<br>
+    <span class="lbl">関係詞</span>&lt;that ▲ found …&gt; は主格の関係詞節で study を修飾（▲＝主語の空所）。found の O は名詞節 [the processes … can begin …]。<br>
+    <div class="jp"><b>訳：</b>人はそれぞれ違うペースで年をとる、と最近のある研究は述べている。その研究によれば、老化の過程は人生のかなり早い段階で始まりうる。</div>
+  </div>
+</div>
+
+<!-- (2) -->
+<div class="sent">
+  <span class="num focus">focus (2)</span>
+  <div class="en">
+    The study calculated<span class="p">❸</span> the aging rate <span class="adj">of 954 men and women</span> ─
+    <span class="b-adv">(</span><span class="adv">taking</span> various measurements <span class="adj">of their bodies' health</span><span class="b-adv">)</span> ─
+    <span class="b-adv">(</span><span class="adv">when</span> they were<span class="v">②</span> each 26, 32 and 38 in chronological years<span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>calculated<span class="p">❸</span>（③）。O ＝ the aging rate &lt;of …&gt;。<br>
+    <span class="lbl">準動詞</span><span class="tmk">taking … ad | ③</span> 分詞構文（付帯状況）。O＝various measurements &lt;of …&gt;。<br>
+    <span class="lbl">副詞節</span>(when they were …)：were は②（26/32/38 が補語）。<br>
+    <div class="jp"><b>訳：</b>その研究は、954人の男女それぞれが暦年齢で26歳・32歳・38歳のときに、身体の健康に関するさまざまな測定を行いながら、彼らの老化速度を算出した。</div>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="sent">
+  <span class="num">5</span>
+  <div class="en">
+    <span class="b-adv">(</span><span class="adv">By</span> analyzing <span class="b-noun">[</span><span class="adv">how</span> these measures changed<span class="v">①</span> over time<span class="b-noun">]</span><span class="b-adv">)</span>,
+    the researchers were<span class="p">❷</span> able <span class="b-adv">(</span><span class="adv">to see</span>
+    <span class="b-noun">[</span>who aged<span class="v">①</span> faster<span class="b-noun">]</span> and
+    <span class="b-noun">[</span>who aged<span class="v">①</span> slower than normal<span class="b-noun">]</span><span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>were<span class="p">❷</span>（be able to の be、②）。<br>
+    <span class="lbl">準動詞</span><span class="tmk">analyzing … 前O | ③</span>（前置詞 By の目的語）。O＝名詞節 [how these measures changed …]。<br>
+    <span class="tmk">to see … ad | ③</span> able を修飾する副詞用法。O＝2つの名詞節 [who aged faster] / [who aged slower than normal]。<br>
+    <div class="jp"><b>訳：</b>これらの指標が時間とともにどう変化したかを分析することで、研究者たちは誰が標準より速く老化し、誰が遅く老化したのかを見て取ることができた。</div>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="sent">
+  <span class="num">6</span>
+  <div class="en">
+    The aim <span class="adj">of the research</span> is<span class="p">❷</span> <span class="adv">to be able</span> eventually
+    <span class="adv">to identify</span> signs <span class="adj">of premature aging</span>
+    <span class="b-adv">(</span><span class="adv">before</span> it becomes<span class="v">②</span> evident years or decades later
+    in chronic diseases <span class="adj">such as cardiovascular disease, diabetes, or kidney and lung impairment</span><span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>is<span class="p">❷</span>（②）。C＝to be able …（不定詞名詞用法）。<br>
+    <span class="lbl">準動詞</span><span class="tmk">to be … C | ②</span> ／ <span class="tmk">to identify … ad | ③</span>（able を修飾）。O＝signs &lt;of …&gt;。<br>
+    <span class="lbl">副詞節</span>(before it becomes evident …)：becomes は②（evident が補語）。<br>
+    <div class="jp"><b>訳：</b>この研究の狙いは、心血管疾患・糖尿病・腎臓や肺の機能障害といった慢性疾患として何年も何十年も後に明らかになる前に、早期老化の兆候を最終的に特定できるようにすることである。</div>
+  </div>
+</div>
+
+<!-- 7 -->
+<div class="sent">
+  <span class="num">7</span>
+  <div class="en">
+    "Intervention <span class="b-adj">&lt;</span><span class="adj">to reverse or delay the march</span> <span class="adj">toward age-related diseases</span><span class="b-adj">&gt;</span>
+    must be scheduled<span class="p">−❸</span>
+    <span class="b-adv">(</span><span class="adv">while</span> people are<span class="v">②</span> still young<span class="b-adv">)</span>,"
+    <span class="b-adv">(</span><span class="adv">according to the study</span>, <span class="adv">published online last week in the Proceedings of the National Academy of Sciences</span><span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>must be scheduled<span class="p">−❸</span>（受身）。S＝Intervention。<br>
+    <span class="lbl">準動詞</span><span class="tmk">to reverse / delay … a | ③</span> Intervention を修飾。O＝the march &lt;toward …&gt;。<br>
+    <span class="tmk">published … a | −③</span> the study を修飾する過去分詞（他動詞→受身）。<br>
+    <span class="lbl">副詞節</span>(while people are still young)：are は②。<br>
+    <div class="jp"><b>訳：</b>「加齢関連疾患への歩みを逆転させる、あるいは遅らせるための介入は、人がまだ若いうちに予定されねばならない」と、先週 PNAS にオンライン掲載されたこの研究は述べている。</div>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="sent">
+  <span class="num">8</span>
+  <div class="en">
+    Also, <span class="b-noun">[</span>being able <span class="adv">to measure</span> aging in young people<span class="b-noun">]</span> could allow<span class="v">⑤</span>
+    scientists <span class="adv">to test</span> the effectiveness <span class="adj">of antiaging therapies</span>,
+    <span class="adj">such as calorie-restrictive diets</span>, the study said<span class="p">❸</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>said<span class="p">❸</span>（③・伝達動詞）。O＝引用節全体（先頭に移動）。<br>
+    <span class="lbl">引用節</span>could allow<span class="v">⑤</span>（allow O to do の第5文型）。S＝[being able to measure …]（動名詞句）。<br>
+    <span class="lbl">準動詞</span><span class="tmk">being … S | ②</span> ／ <span class="tmk">to measure … ad | ③</span>（able 修飾）／ <span class="tmk">to test … C | ③</span>（⑤の C）。O of test＝the effectiveness &lt;of …&gt;。<br>
+    <div class="jp"><b>訳：</b>また、若い人の老化を測定できれば、科学者はカロリー制限食のような抗老化療法の効果を検証できるようになるだろう、とその研究は述べた。</div>
+  </div>
+</div>
+
+<!-- 9 -->
+<div class="sent">
+  <span class="num">9</span>
+  <div class="en">
+    <span class="b-adv">(</span><span class="adv">To measure the pace</span> <span class="adj">of biological aging</span><span class="b-adv">)</span>,
+    <span class="b-adj">&lt;</span><span class="adj">which</span> the study defined<span class="v">③</span> <span class="gap">▲</span> as the declining integrity <span class="adj">of multiple organ systems</span><span class="b-adj">&gt;</span>,
+    the researchers relied<span class="p">❶</span> on 18 separate biomarkers.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>relied<span class="p">❶</span>（rely on ＝自動詞①＋前置詞）。<br>
+    <span class="lbl">準動詞</span><span class="tmk">To measure … ad | ③</span> 目的を表す副詞用法。O＝the pace &lt;of …&gt;。<br>
+    <span class="lbl">関係詞</span>&lt;which … defined ▲ as …&gt; は目的格（define A as B の A が空所▲）。先行詞は the pace of biological aging＝挿入的な非制限用法。<br>
+    <div class="jp"><b>訳：</b>生物学的老化（この研究では複数の臓器系の健全性の低下と定義された）の速度を測定するため、研究者たちは18の別々のバイオマーカーに頼った。</div>
+  </div>
+</div>
+
+<!-- 10 -->
+<div class="sent">
+  <span class="num">10</span>
+  <div class="en">
+    These ranged<span class="p">❶</span>
+    <span class="b-adv">(</span><span class="adv">from common measures such as HDL-cholesterol levels and mean arterial blood pressure</span><span class="b-adv">)</span>
+    <span class="b-adv">(</span><span class="adv">to more obscure ones like the length</span> <span class="adj">of telomeres</span><span class="b-adv">)</span> ─
+    the protective caps <span class="adj">&lt;on the ends of chromosomes&gt;</span>
+    <span class="b-adj">&lt;</span><span class="adj">that</span> <span class="gap">▲</span> shorten<span class="v">①</span> with age<span class="b-adj">&gt;</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>ranged<span class="p">❶</span>（range from A to B ＝①）。from句・to句は動詞を修飾する副詞句。<br>
+    <span class="lbl">関係詞</span>&lt;that ▲ shorten with age&gt; は主格。先行詞 the protective caps（＝telomeres の同格説明）を修飾。<br>
+    <div class="jp"><b>訳：</b>これらは、HDLコレステロール値や平均動脈血圧のような一般的な指標から、テロメア（加齢とともに短くなる、染色体の末端の保護キャップ）の長さのような、より分かりにくい指標にまで及んだ。</div>
+  </div>
+</div>
+
+<!-- 11 -->
+<div class="sent">
+  <span class="num">11</span>
+  <div class="en">
+    Most <span class="adj">of the study participants</span> aged<span class="p">❶</span>
+    <span class="b-adv">(</span><span class="adv">one biological year</span><span class="b-adv">)</span>
+    <span class="b-adv">(</span><span class="adv">for each chronological year</span><span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>aged<span class="p">❶</span>（age＝自動詞「年をとる」①）。one biological year は程度を表す副詞的対格。<br>
+    <div class="jp"><b>訳：</b>研究参加者の大半は、暦年齢1年につき生物学的にも1歳ずつ年をとった。</div>
+  </div>
+</div>
+
+<!-- (3) -->
+<div class="sent">
+  <span class="num focus">focus (3)</span>
+  <div class="en">
+    Some, however, put on<span class="p">❸</span> <span class="b-noun">[</span>as much as three biological years<span class="b-noun">]</span>
+    <span class="b-adv">(</span><span class="adv">for every one year</span><span class="b-adv">)</span>,
+    <span class="b-adv">(</span><span class="adv">while</span> others didn't increase<span class="v">①</span> in biological age at all
+    <span class="adv">during the 12-year span</span> <span class="b-adj">&lt;</span><span class="adj">the study surveyed <span class="gap">▲</span></span><span class="b-adj">&gt;</span><span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>put on<span class="p">❸</span>（put on＝③「（年齢を）加える」）。O＝as much as three biological years。<br>
+    <span class="lbl">副詞節</span>(while others didn't increase …)：increase は①。対比の while。<br>
+    <span class="lbl">関係詞</span>&lt;the study surveyed ▲&gt; は目的格関係詞 that/which の省略。span が surveyed の O（空所▲）。<br>
+    <div class="jp"><b>訳：</b>しかし中には、1年につき最大3歳分も生物学的に老化した者もいれば、逆に研究が調査した12年間で生物学的年齢がまったく上がらなかった者もいた。</div>
+  </div>
+</div>
+
+<!-- 12 -->
+<div class="sent">
+  <span class="num">12</span>
+  <div class="en">
+    <span class="b-adv">(</span><span class="adv">Using a subset</span> <span class="adj">of the biomarkers</span><span class="b-adv">)</span>,
+    the researchers calculated<span class="p">❸</span>
+    <span class="b-noun">[</span>that <span class="b-adv">(</span><span class="adv">at 38 years old</span><span class="b-adv">)</span>,
+    the participants' biological ages ranged<span class="v">①</span> from 28 to 61<span class="b-noun">]</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>calculated<span class="p">❸</span>（③）。O＝that節。<br>
+    <span class="lbl">準動詞</span><span class="tmk">Using … ad | ③</span> 分詞構文。O＝a subset &lt;of …&gt;。<br>
+    <div class="jp"><b>訳：</b>バイオマーカーの一部を用いて、研究者たちは、38歳時点で参加者の生物学的年齢は28歳から61歳まで幅があったと算出した。</div>
+  </div>
+</div>
+
+<!-- (4) -->
+<div class="sent">
+  <span class="num focus">focus (4)</span>
+  <div class="en">
+    Studies <span class="b-adj">&lt;</span><span class="adj">looking at biological age</span><span class="b-adj">&gt;</span> have been done<span class="p">−❸</span> before,
+    but mainly <span class="b-adv">(</span><span class="adv">in older people</span>
+    <span class="b-adj">&lt;</span><span class="adj">who</span> <span class="gap">▲</span> already had<span class="v">③</span> age-related diseases<span class="b-adj">&gt;</span><span class="b-adv">)</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>have been done<span class="p">−❸</span>（受身・現在完了）。S＝Studies。<br>
+    <span class="lbl">準動詞</span><span class="tmk">looking … a | ①</span> 現在分詞・形容詞用法で Studies を修飾（look at＝自動詞①）。<br>
+    <span class="lbl">関係詞</span>&lt;who ▲ already had …&gt; は主格。older people を修飾。<br>
+    <div class="jp"><b>訳：</b>生物学的年齢に着目した研究はこれまでにも行われてきたが、その多くはすでに加齢関連疾患を抱えた高齢者を対象としたものだった。</div>
+  </div>
+</div>
+
+<!-- 14 -->
+<div class="sent">
+  <span class="num">14</span>
+  <div class="en">
+    Earlier studies also generally took<span class="p">❸</span> just a single reading
+    <span class="b-adj">&lt;</span><span class="adj">that</span> <span class="gap">▲</span> compared<span class="v">③</span> chronological with biological age
+    and didn't examine<span class="v">③</span> the pace <span class="adj">of aging</span> over time<span class="b-adj">&gt;</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>took<span class="p">❸</span>（③）。O＝a single reading &lt;that …&gt;。<br>
+    <span class="lbl">関係詞</span>&lt;that ▲ compared … and didn't examine …&gt; は主格。節内に compared / examine の2動詞（and で並列）。compare A with B。<br>
+    <div class="jp"><b>訳：</b>また、以前の研究は概して、暦年齢と生物学的年齢を比較する一度きりの測定を行うだけで、老化の速度を経時的に調べることはしなかった。</div>
+  </div>
+</div>
+
+<!-- (5) -->
+<div class="sent">
+  <span class="num focus">focus (5)</span>
+  <div class="en">
+    "This makes<span class="p">❺</span> <span class="b-noun">[</span>detecting the mechanism <span class="adj">of aging</span><span class="b-noun">]</span> difficult
+    <span class="b-adv">(</span><span class="adv">because</span> it can be<span class="v">②</span> hard <span class="adv">to separate aging</span>
+    <span class="adv">from a disease-specific mechanism</span><span class="b-adv">)</span>," said<span class="p">❸</span> Daniel Belsky …
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>（伝達枠）said<span class="p">❸</span>（③、倒置：said＋主語 Daniel Belsky）。<br>
+    <span class="lbl">引用節</span>makes<span class="v">⑤</span>（make O C の第5文型）。O＝[detecting the mechanism of aging]（動名詞句）、C＝difficult。<br>
+    <span class="lbl">準動詞</span><span class="tmk">detecting … O | ③</span>（makes の O）。it は形式主語、真主語＝<span class="tmk">to separate … 真S | ③</span>（separate A from B）。<br>
+    <span class="lbl">指示語</span><span style="color:#b91c1c;">This</span>＝直前の内容（＝これまでの研究が一度きりの測定しかしてこなかったこと／老化と病気特有の仕組みが切り分けにくいこと）。<br>
+    <div class="jp"><b>訳：</b>「このことが、老化の仕組みを特定するのを難しくしている。というのも、老化を<b>ある特定の病気に固有の仕組み</b>から切り離すのは困難でありうるからだ」と、新しい研究の筆頭著者でデューク大学医学部の助教であるダニエル・ベルスキーは述べた。</div>
+  </div>
+</div>
+
+<!-- 16 -->
+<div class="sent">
+  <span class="num">16</span>
+  <div class="en">
+    "It also may be<span class="v">②</span> the case
+    <span class="b-noun">[</span>that it's<span class="v">②</span> too late <span class="adv">to intervene</span> effectively
+    with some <span class="adj">of these individuals</span><span class="b-noun">]</span>"
+    <span class="b-adv">(</span><span class="adv">after the age of 40 or 50</span><span class="b-adv">)</span>, he said<span class="p">❸</span>.
+  </div>
+  <div class="note">
+    <span class="lbl">大黒柱</span>（伝達枠）said<span class="p">❸</span>（③）。<br>
+    <span class="lbl">引用節</span>It may be the case（be＝②）。It は形式主語、that節が真主語（同格的）。<br>
+    <span class="lbl">準動詞</span><span class="tmk">to intervene … ad | ①</span> too … to 構文（intervene＝自動詞①）。<br>
+    <div class="jp"><b>訳：</b>「そうした人々の一部については、40歳や50歳を過ぎてからでは、効果的に介入するには手遅れだということもありうる」と彼は述べた。</div>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  薬袋善郎『英語リーディング教本』準拠　／　登木プロジェクト　英文解釈パイプライン
+</footer>
+</body>
+</html>
